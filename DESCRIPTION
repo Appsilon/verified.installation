@@ -1,0 +1,12 @@
+Package: verified.installation
+Type: Package
+Title: Verified Installation
+Version: 1.0.0
+Author: Paweł Przytuła
+Maintainer: Paweł Przytuła <pawel@appsilondatascience.com>
+Description: R Platform 
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Depends:
+  desc
