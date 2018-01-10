@@ -34,8 +34,8 @@ package_has_minimum_version <- function(expected_minimum_version) {
   }
 }
 
-install_and_verify <- function(install = install.packages, verify = package_is_installed, package = NULL, ...) {
+install_and_verify <- function(install = install.packages, verify = package_is_installed, package = NULL, package_path = package, ...) {
   if (is.null(package)) stop("Package name is null")
-  install(package, ...)
+  install(package_path, ...)
   for (v in c(verify)) v(package)
 }
