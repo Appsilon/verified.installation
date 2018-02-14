@@ -21,33 +21,48 @@ stop_session <- function(text = "", ...) {
 
 
 
-package_is_installed <- function(package, print_info = TRUE) {
+package_is_installed <- function(package, print_info = TRUE, stop_session_on_error = TRUE) {
   if (print_info) {
     log_check("%s package_is_installed", package)
   }
   if (!is.element(package, installed.packages()[,1])) {
-    stop_session("Package %s is not installed!", package)
+    message = sprintf("Package %s is not installed!", package)
+    if (stop_session_on_error) {
+      stop_session(message)
+    } else {
+      stop(message)
+    }
   }
 }
 
-package_has_exact_version <- function(expected_version) {
+package_has_exact_version <- function(expected_version, stop_session_on_error = TRUE) {
   function(package) {
     log_check("%s package_has_exact_version %s", package, expected_version)
     package_is_installed(package, print_info = FALSE)
     current_version <- installed.packages()[package, "Version"]
     if (utils::compareVersion(current_version, expected_version) != 0) {
-      stop_session("Package %s version %s is not equal to %s", package, current_version, expected_version)
+      message = sprintf("Package %s version %s is not equal to %s", package, current_version, expected_version)
+      if (stop_session_on_error) {
+        stop_session(message)
+      } else {
+        stop(message)
+      }
     }
   }
 }
 
-package_has_minimum_version <- function(expected_minimum_version) {
+package_has_minimum_version <- function(expected_minimum_version, stop_session_on_error = TRUE) {
   function(package) {
     log_check("%s package_has_minimum_version %s", package, expected_minimum_version)
     package_is_installed(package, print_info = FALSE)
     current_version <- installed.packages()[package, "Version"]
     if (utils::compareVersion(current_version, expected_minimum_version) == -1) {
-      stop_session("Package %s version %s is not >= %s", package, current_version, expected_minimum_version)
+      message = sprintf("Package %s version %s is not >= %s", package, current_version, expected_minimum_version)
+      if (stop_session_on_error) {
+        stop_session(message)
+      } else {
+        stop(message)
+      }
     }
   }
 }
@@ -62,7 +77,7 @@ install_and_verify <- function(install = install.packages,
 
   if (!overwrite) {
     package_is_not_installed <- tryCatch({
-      for (v in c(verify)) v(package)
+      for (v in c(verify)) v(package, stop_session_on_error = FALSE)
       log_check("%s is already installed with provided requirements.", package)
       FALSE
     }, error = function(e) {
