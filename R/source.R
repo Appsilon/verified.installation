@@ -67,27 +67,25 @@ package_has_minimum_version <- function(expected_minimum_version, stop_session_o
   }
 }
 
-install_and_verify <- function(install = install.packages, 
-                               verify = package_is_installed, 
-                               package = NULL, 
-                               package_path = package, 
+install_and_verify <- function(install = install.packages,
+                               verify = package_is_installed,
+                               package = NULL,
+                               package_path = package,
                                overwrite = FALSE, ...) {
 
   if (is.null(package)) stop_session("Package name is null")
 
-  if (!overwrite) {
-    package_is_not_installed <- tryCatch({
-      for (v in c(verify)) v(package, stop_session_on_error = FALSE)
-      log_check("%s is already installed with provided requirements.", package)
-      FALSE
-    }, error = function(e) {
-      TRUE
-    })
-  }
+  package_is_not_installed <- tryCatch({
+    for (v in c(verify)) v(package, stop_session_on_error = FALSE)
+    log_check("%s is already installed with provided requirements.", package)
+    FALSE
+  }, error = function(e) {
+    TRUE
+  })
 
   if (package_is_not_installed || overwrite) {
     log_info("Installing %s...", package)
-    install(package_path, ...) 
+    install(package_path, ...)
   } else {
     log_info("Skipping installation...")
   }
