@@ -35,8 +35,8 @@ package_is_installed <- function(package, print_info = TRUE, stop_session_on_err
   }
 }
 
-package_has_exact_version <- function(expected_version, stop_session_on_error = TRUE) {
-  function(package) {
+package_has_exact_version <- function(expected_version) {
+  function(package, stop_session_on_error = TRUE) {
     log_check("%s package_has_exact_version %s", package, expected_version)
     package_is_installed(package, print_info = FALSE)
     current_version <- installed.packages()[package, "Version"]
@@ -51,8 +51,8 @@ package_has_exact_version <- function(expected_version, stop_session_on_error = 
   }
 }
 
-package_has_minimum_version <- function(expected_minimum_version, stop_session_on_error = TRUE) {
-  function(package) {
+package_has_minimum_version <- function(expected_minimum_version) {
+  function(package, stop_session_on_error = TRUE) {
     log_check("%s package_has_minimum_version %s", package, expected_minimum_version)
     package_is_installed(package, print_info = FALSE)
     current_version <- installed.packages()[package, "Version"]
