@@ -68,7 +68,7 @@ package_has_minimum_version <- function(expected_minimum_version) {
 }
 
 install_and_verify <- function(install = install.packages,
-                               verify = package_is_installed,
+                               verify = NULL,
                                package = NULL,
                                package_path = package,
                                overwrite = FALSE, ...) {
@@ -76,7 +76,7 @@ install_and_verify <- function(install = install.packages,
   if (is.null(package)) stop_session("Package name is null")
 
   package_is_not_installed <- tryCatch({
-    for (v in c(verify)) v(package, stop_session_on_error = FALSE)
+    for (v in c(package_is_installed, verify)) v(package, stop_session_on_error = FALSE)
     log_check("%s is already installed with provided requirements.", package)
     FALSE
   }, error = function(e) {
