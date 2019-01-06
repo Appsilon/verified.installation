@@ -1,10 +1,14 @@
 Package: verified.installation
 Type: Package
 Title: Verified Installation
-Version: 1.1
+Version: 2.0
 Author: Paweł Przytuła
-Maintainer: Paweł Przytuła <pawel@appsilondatascience.com>
-Description: R Platform 
+Maintainer: Paweł Przytuła <pawel@appsilon.com>
+Description: R package that helps installing dependencies in Docker images
+Imports:
+    remotes,
+    cli,
+    crayon
 License: MIT
 Encoding: UTF-8
 LazyData: true
