@@ -1,1 +1,3 @@
-exportPattern("^[[:alpha:]]+")
+export(install_and_verify)
+export(install_and_verify_version)
+export(install_and_verify_github)

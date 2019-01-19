@@ -1,94 +1,88 @@
-log_print <- function(mode = "info", text = "", ...) {
-  cat(sprintf("[%s] %s\n", mode, sprintf(text, ...)))
+message_ok <- function(message, ...) sprintf("%s %s\n", crayon::green(cli::symbol$tick), sprintf(message, ...))
+message_info <- function(message, ...) sprintf("%s %s\n", crayon::cyan(cli::symbol$play), sprintf(message, ...))
+message_error <- function(message, ...) sprintf("%s %s\n", crayon::red(cli::symbol$cross), sprintf(message, ...))
+
+is_installed <- function(package) {
+  is.element(package, installed.packages()[,1])
 }
 
-log_check <- function(text = "", ...) {
-  log_print("check", text, ...)
-}
-
-log_info <- function(text = "", ...) {
-  log_print("info", text, ...)
-}
-
-log_error <- function(text = "", ...) {
-  log_print("error", text, ...)
-}
-
-stop_session <- function(text = "", ...) {
-  log_error(text, ...)
-  quit(status = 1)
-}
-
-
-
-package_is_installed <- function(package, print_info = TRUE, stop_session_on_error = TRUE) {
-  if (print_info) {
-    log_check("%s package_is_installed", package)
-  }
-  if (!is.element(package, installed.packages()[,1])) {
-    message = sprintf("Package %s is not installed!", package)
-    if (stop_session_on_error) {
-      stop_session(message)
-    } else {
-      stop(message)
-    }
-  }
-}
-
-package_has_exact_version <- function(expected_version) {
-  function(package, stop_session_on_error = TRUE) {
-    log_check("%s package_has_exact_version %s", package, expected_version)
-    package_is_installed(package, print_info = FALSE)
+has_exact_version <- function(package, expected_version) {
+  if (is_installed(package)) {
     current_version <- installed.packages()[package, "Version"]
-    if (utils::compareVersion(current_version, expected_version) != 0) {
-      message = sprintf("Package %s version %s is not equal to %s", package, current_version, expected_version)
-      if (stop_session_on_error) {
-        stop_session(message)
-      } else {
-        stop(message)
-      }
+    return(utils::compareVersion(current_version, expected_version) == 0)
+  } else {
+    return(FALSE)
+  }
+}
+
+verify_installation <- function(package) {
+  if (!is_installed(package)) {
+    stop(sprintf("Package %s is not installed", package))
+  }
+}
+
+verify_version <- function(package, version = NULL, ...) {
+  if (!is.null(version)) {
+    if (!has_exact_version(package, version)) {
+      stop(sprintf("Package %s has version %s instead of expected %s", package, current_version, version))
     }
   }
 }
 
-package_has_minimum_version <- function(expected_minimum_version) {
-  function(package, stop_session_on_error = TRUE) {
-    log_check("%s package_has_minimum_version %s", package, expected_minimum_version)
-    package_is_installed(package, print_info = FALSE)
-    current_version <- installed.packages()[package, "Version"]
-    if (utils::compareVersion(current_version, expected_minimum_version) == -1) {
-      message = sprintf("Package %s version %s is not >= %s", package, current_version, expected_minimum_version)
-      if (stop_session_on_error) {
-        stop_session(message)
-      } else {
-        stop(message)
-      }
-    }
+skip_installation <- function(overwrite, package, version = NULL, ...) {
+  version_is_ok <- ifelse(is.null(version), TRUE, has_exact_version(package, version))
+  !overwrite && is_installed(package) && version_is_ok
+}
+
+handle_error <- function(message) {
+  if (getOption("stop_session_on_error", default = TRUE)) {
+    print(message)
+    quit(status = 1)
+  } else {
+    stop(message)
   }
 }
 
 install_and_verify <- function(install = install.packages,
-                               verify = NULL,
                                package = NULL,
                                package_path = package,
-                               overwrite = FALSE, ...) {
+                               overwrite = FALSE,
+                               ...) {
+  tryCatch({
 
-  if (is.null(package)) stop_session("Package name is null")
+    if (skip_installation(overwrite, package, ...)) {
+      cat(message_ok("Skipping installation for %s", crayon::cyan(package)))
+    } else {
+      cat(message_info("Installing %s...", crayon::cyan(package)))
+      install(package_path, ...)
+    }
 
-  package_is_not_installed <- tryCatch({
-    for (v in c(package_is_installed, verify)) v(package, stop_session_on_error = FALSE)
-    log_check("%s is already installed with provided requirements.", package)
-    FALSE
-  }, error = function(e) {
-    TRUE
-  })
+    verify_installation(package)
+    verify_version(package, ...)
 
-  if (package_is_not_installed || overwrite) {
-    log_info("Installing %s...", package)
-    install(package_path, ...)
-  } else {
-    log_info("Skipping installation...")
-  }
+    cat(message_ok("Package %s installed", crayon::cyan(package)))
 
-  for (v in c(verify)) v(package)
+  }, error = handle_error)
+}
+
+install_and_verify_version <- function(package, version) {
+  install_and_verify(
+    install = remotes::install_version,
+    package = package,
+    version = version,
+    upgrade = "never"
+  )
+}
+
+install_and_verify_github <- function(package, package_path, ref) {
+  # Installing package from github must be always with overwrite = TRUE option.
+  # We can't assume, that code on github hasn't changed. Version match is not enough to skip installation.
+  install_and_verify(
+    install = remotes::install_github,
+    package = package,
+    package_path = package_path,
+    ref = ref,
+    upgrade = "never",
+    overwrite = TRUE
+  )
 }
